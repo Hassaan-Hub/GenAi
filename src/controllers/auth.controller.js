@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
  * @access Public
  */
 async function registerUserController(req, res) {
-  const { usrname, email, password } = req.body;
+  const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({
@@ -61,7 +61,7 @@ async function registerUserController(req, res) {
 async function loginUserController(req, res) {
   const { email, password } = req.body;
 
-  const user = userModel.findOne({ email });
+  const user = await userModel.findOne({ email });
 
   if (!user) {
     return res.status(400).json({
@@ -69,13 +69,31 @@ async function loginUserController(req, res) {
     });
   }
 
-  const isPasswordValid = bcrypt.compare(password, user.password)
+  const isPasswordValid = await bcryptjs.compare(password, user.password);
 
-  if(!isPasswordValid){
+  if (!isPasswordValid) {
     return res.status(400).json({
-        message: "Incorrect password"
-    })
+      message: "Incorrect password",
+    });
   }
+
+  const token = jwt.sign(
+    { id: user._id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  res.cookie("token", token)
+
+  res.status(200).json({
+    message: "user loggedIn successfully",
+    user:{
+        id: user._id,
+        username: user.username,
+        email: user.email
+    }
+  })
+  
 }
 
 module.exports = {
