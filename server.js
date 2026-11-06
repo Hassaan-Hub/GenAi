@@ -1,9 +1,9 @@
-import 'dotenv/config.js';
-import dns from 'dns';
+require("dotenv").config();
+const dns = require("dns");
 dns.setServers(["1.1.1.1"]);
 
-import app from './src/app.js';
-import connectDB from './src/db/db.js';
+const app = require("./src/app.js");
+const connectDB = require("./src/db/db.js");
 
 connectDB();
 
