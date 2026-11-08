@@ -1,6 +1,7 @@
 const userModel = require("../models/user.model");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const userBlackListModel = require("../models/blackList.model");
 
 /**
  * @name registerUserController
@@ -83,20 +84,59 @@ async function loginUserController(req, res) {
     { expiresIn: "1d" }
   );
 
-  res.cookie("token", token)
+  res.cookie("token", token);
 
   res.status(200).json({
     message: "user loggedIn successfully",
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+  });
+}
+
+/**
+ * @name logoutUserController
+ * @description logout a user, expects token in the request header
+ * @access Public
+ */
+async function logoutUserController(req, res) {
+  const token = req.cookies.token;
+
+  if (token) {
+    await userBlackListModel.create({ token });
+  }
+
+  res.clearCookie("token")
+
+  res.status(201).json({
+    message: "token is blacklisted successfully"
+  })
+}
+
+/**
+ * @name getMeController
+ * @description get the current logged in user details.
+ * @access private
+ */
+async function getMeController(req, res) {
+  
+  const user = await userModel.findById(req.user.id)
+  
+  res.status(200).json({
+    message: "User fetch successfully",
     user:{
-        id: user._id,
-        username: user.username,
-        email: user.email
+      id: user.id,
+      username: user.username,
+      email: user.email
     }
   })
-  
 }
 
 module.exports = {
   registerUserController,
   loginUserController,
+  logoutUserController,
+  getMeController
 };
